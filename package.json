@@ -1,6 +1,6 @@
 {
   "name": "lpm",
-  "displayName": "Logstash Pipeline Manager",
+  "displayName": "Logstash-Pipeline-Manager",
   "description": "",
   "version": "0.0.1",
   "engines": {
@@ -9,66 +9,20 @@
   "categories": [
     "Other"
   ],
-	"activationEvents": [
-		"onFileSystem:lpm",
-		"onCommand:lpm.workspaceInit",
-		"onCommand:lpm.init",
-		"onCommand:lpm.reset"
-	],
+  "activationEvents": [
+    "onFileSystem:lpm",
+    "onCommand:lpm.workspaceInit"
+  ],
   "main": "./out/extension.js",
-	"contributes": {
-		"commands": [
-			{
-				"command": "lpm.workspaceInit",
-				"title": "Setup Workspace",
-				"category": "LPM"
-			},
-			{
-				"command": "lpm.init",
-				"title": "Create Files",
-				"category": "LPM"
-			},
-			{
-				"command": "lpm.reset",
-				"title": "Delete Files",
-				"category": "LPM"
-			},
-			{
-				"command": "lpm.deleteFile",
-				"title": "Delete \"file.txt\"",
-				"category": "LPM"
-			},
-			{
-				"command": "lpm.addFile",
-				"title": "Add \"file.txt\"",
-				"category": "LPM"
-			}
-		],
-		"menus": {
-			"commandPalette": [
-				{
-					"command": "lpm.init",
-					"when": "workbenchState == workspace"
-				},
-				{
-					"command": "lpm.reset",
-					"when": "workbenchState == workspace"
-				},
-				{
-					"command": "lpm.deleteFile",
-					"when": "workbenchState == workspace"
-				},
-				{
-					"command": "lpm.addFile",
-					"when": "workbenchState == workspace"
-				},
-				{
-					"command": "lpm.workspaceInit",
-					"when": "workbenchState != workspace"
-				}
-			]
-		}
-	},
+  "contributes": {
+    "commands": [
+      {
+        "command": "lpm.workspaceInit",
+        "title": "Setup Workspace",
+        "category": "LPM"
+      }
+    ]
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
@@ -81,12 +35,16 @@
     "@types/glob": "^7.1.3",
     "@types/mocha": "^8.0.4",
     "@types/node": "^12.11.7",
+    "@types/node-fetch": "^2.5.7",
+    "@types/text-encoding": "^0.0.35",
     "@types/vscode": "^1.52.0",
     "@typescript-eslint/eslint-plugin": "^4.9.0",
     "@typescript-eslint/parser": "^4.9.0",
     "eslint": "^7.15.0",
     "glob": "^7.1.6",
     "mocha": "^8.1.3",
+    "node-fetch": "^2.6.1",
+    "text-encoding": "^0.7.0",
     "typescript": "^4.1.2",
     "vscode-test": "^1.4.1"
   }

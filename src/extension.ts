@@ -10,30 +10,30 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "lpm" is now active!');
+	console.log('Congratulations, your extension "lpm" is now actived!');
 
 	const lpm = new LPM();
     context.subscriptions.push(vscode.workspace.registerFileSystemProvider('lpm', lpm, { isCaseSensitive: true }));
     let initialized = false;
 
-	context.subscriptions.push(vscode.commands.registerCommand('lpm.reset', _ => {
-        for (const [name] of lpm.readDirectory(vscode.Uri.parse('lpm:/'))) {
-            lpm.delete(vscode.Uri.parse(`lpm:/${name}`));
-        }
-        initialized = false;
-    }));
+	// context.subscriptions.push(vscode.commands.registerCommand('lpm.reset', _ => {
+    //     for (const [name] of lpm.readDirectory(vscode.Uri.parse('lpm:/'))) {
+    //         lpm.delete(vscode.Uri.parse(`lpm:/${name}`));
+    //     }
+    //     initialized = false;
+    // }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('lpm.addFile', _ => {
-        if (initialized) {
-            lpm.writeFile(vscode.Uri.parse(`lpm:/file.txt`), Buffer.from('input {\n}\n\nfilter {\n}\n\noutput {\n}\n'), { create: true, overwrite: true });
-        }
-    }));
+    // context.subscriptions.push(vscode.commands.registerCommand('lpm.addFile', _ => {
+    //     if (initialized) {
+    //         lpm.writeFile(vscode.Uri.parse(`lpm:/file.txt`), Buffer.from('input {\n}\n\nfilter {\n}\n\noutput {\n}\n'), { create: true, overwrite: true });
+    //     }
+    // }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('lpm.deleteFile', _ => {
-        if (initialized) {
-            lpm.delete(vscode.Uri.parse('lpm:/file.txt'));
-        }
-    }));
+    // context.subscriptions.push(vscode.commands.registerCommand('lpm.deleteFile', _ => {
+    //     if (initialized) {
+    //         lpm.delete(vscode.Uri.parse('lpm:/file.txt'));
+    //     }
+    // }));
 
     context.subscriptions.push(vscode.commands.registerCommand('lpm.init', _ => {
         if (initialized) {
