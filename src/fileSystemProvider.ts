@@ -13,15 +13,23 @@ export class LPM implements vscode.FileSystemProvider {
     // --- manage file metadata
 
     async stat(uri: vscode.Uri): Promise<vscode.FileStat> {
-        const basename = path.posix.basename(uri.path);
-        var entry = await this.driver.getPipelineStats(basename);
+        // console.log("STATS: "+uri.toString());
+        // console.log("STATS: "+uri.authority);
+        // console.log("STATS: "+uri.fragment);
+        // console.log("STATS: "+uri.fsPath);
+        // console.log("STATS: "+uri.path);
+        // console.log("STATS: "+uri.query);
+        // console.log("STATS: "+uri.scheme);
+        // const basename = path.posix.basename(uri.path);
+        var entry = await this.driver.getPipelineStats(uri);
         return entry;
     }
 
     async readDirectory(uri: vscode.Uri): Promise<[string, vscode.FileType][]> {
+        // console.log("READ DIR: "+uri.toString());
         try {
             const result:[string, vscode.FileType][] = [];
-            const pipelines:File[] = await this.driver.getPipelineList();
+            const pipelines:File[] = await this.driver.getPipelineList(uri);
             pipelines.forEach((pipe:File) => {
                 result.push([pipe.name, vscode.FileType.File]);
             });    
@@ -35,15 +43,15 @@ export class LPM implements vscode.FileSystemProvider {
     // --- manage file contents
 
     async readFile(uri: vscode.Uri): Promise<Uint8Array> {   
-        const basename = path.posix.basename(uri.path);
-        const data:string = await this.driver.getPipelineCode(basename);
+        // const basename = path.posix.basename(uri.path);
+        const data:string = await this.driver.getPipelineCode(uri);
         return Buffer.from(data);    
     }
 
     writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean, overwrite: boolean }): void {
-        const basename = path.posix.basename(uri.path);
+        // const basename = path.posix.basename(uri.path);
         var dec = new TextDecoder();
-        this.driver.savePipeline(basename, dec.decode(content));
+        this.driver.savePipeline(uri, dec.decode(content));
 
         this._fireSoon({ type: vscode.FileChangeType.Changed, uri });
     }
@@ -63,9 +71,9 @@ export class LPM implements vscode.FileSystemProvider {
     }
 
     delete(uri: vscode.Uri): void {
-        const basename = path.posix.basename(uri.path);
+        // const basename = path.posix.basename(uri.path);
         const dirname = uri.with({ path: path.posix.dirname(uri.path) });
-        this.driver.deletePipeline(basename);
+        this.driver.deletePipeline(uri);
         this._fireSoon({ type: vscode.FileChangeType.Changed, uri: dirname }, { uri, type: vscode.FileChangeType.Deleted });
     }
 

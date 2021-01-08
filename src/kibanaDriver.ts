@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import {Headers}  from 'node-fetch';
 import fetch from 'node-fetch';
 import { TextDecoder, TextEncoder } from 'text-encoding';
@@ -47,21 +48,17 @@ export type Entry = File | Directory;
 export class KibanaDriver {
     headers = new Headers();
     httpsAgent = new (require('https')).Agent({rejectUnauthorized: false,});
-    root = "https://localhost:5601";
 
     constructor(){
-        this.root = "https://localhost:5601";
         const meta = {
             'Content-Type': 'application/json',
-            'kbn-xsrf': 'true',
-            'Authorization': 'Basic ZWxhc3RpYzpwYXNzd29yZA=='
+            'kbn-xsrf': 'true'
         };
         this.headers = new Headers(meta);
     }
 
-    async getPipelineList(): Promise<File[]> {
-      
-        const response = await fetch(this.root+'/api/logstash/pipelines', {
+    async getPipelineList(uri: vscode.Uri): Promise<File[]> {      
+        const response = await fetch("https://"+uri.authority+'/api/logstash/pipelines', {
             method: 'GET',
             headers: this.headers,
             agent: this.httpsAgent,
@@ -80,10 +77,9 @@ export class KibanaDriver {
         return result;
     }
     
-    async getPipelineCode(id:string): Promise<string> {
-        
-        // const response = await fetch('https://localhost:5601/api/logstash/pipeline'+this.fromConf(id), {
-        const response = await fetch(this.root+'/api/logstash/pipeline/'+id, {
+    async getPipelineCode(uri: vscode.Uri): Promise<string> {        
+        const basename = path.posix.basename(uri.path);
+        const response = await fetch("https://"+uri.authority+'/api/logstash/pipeline/'+basename, {
             method: 'GET',
             headers: this.headers,
             agent: this.httpsAgent,
@@ -98,58 +94,59 @@ export class KibanaDriver {
         return result;
     }
     
-    async getPipelineStats(id:string): Promise<Entry> {
-        // Get Global stats of pipeline   
-        const response = await fetch(this.root+'/api/logstash/pipelines', {
-            method: 'GET',
-            headers: this.headers,
-            agent: this.httpsAgent,
-        });
-        
-        var pipelineManager = new Directory(id);
-        var entry:File = new File("unknown");
-        if (response.ok) {   
-            const jsonObj = JSON.parse(await response.text());            
-            jsonObj["pipelines"].forEach((pipe:any) => {
-                var pipeline = new File(pipe["id"]);
-                pipelineManager.entries.set(pipe["id"], pipeline);
+    async getPipelineStats(uri: vscode.Uri): Promise<Entry> {
+        try {
+            if(uri.path === "/") {
+                // Get Global stats of pipeline   
+                const response = await fetch("https://"+uri.authority+'/api/logstash/pipelines', {
+                    method: 'GET',
+                    headers: this.headers,
+                    agent: this.httpsAgent,
+                });
+                
+                var pipelineManager = new Directory(uri.path);
+                if (response.ok) {   
+                    const jsonObj = JSON.parse(await response.text());            
+                    jsonObj["pipelines"].forEach((pipe:any) => {
+                        var pipeline = new File(uri.toString()+pipe["id"]);
+                        pipelineManager.entries.set(pipe["id"], pipeline);
+                    });      
+                } 
+                return pipelineManager;
+            } else {
+                    const basename = path.posix.basename(uri.path);
+                    const resp = await fetch("https://"+uri.authority+'/api/logstash/pipeline/'+basename, {
+                        method: 'GET',
+                        headers: this.headers,
+                        agent: this.httpsAgent,
+                    });
 
-                if((pipe["id"]) === id) {
-                    entry = new File(pipe["id"]);
-                    entry.mtime = Date.parse(pipe["last_modified"]);
-                }
-            });      
-        } 
+                    var entry:File = new File("unknown");
+                    var content:string = "";
+                    if (resp.ok) {
+                        const jsonObj = JSON.parse(await resp.text());
+                        content = jsonObj["pipeline"];
+                    }
+                    entry.data = Buffer.from(content);
 
-        if(id === "") {
-            return pipelineManager;
-        } else {
-            // get the pipeline data        
-            // const resp = await fetch('https://localhost:5601/api/logstash/pipeline'+this.fromConf(id), {
-            const resp = await fetch(this.root+'/api/logstash/pipeline/'+id, {
-                method: 'GET',
-                headers: this.headers,
-                agent: this.httpsAgent,
-            });
-
-            var content:string = "";
-            if (resp.ok) {
-                const jsonObj = JSON.parse(await resp.text());
-                content = jsonObj["pipeline"];
+                    return entry;
             }
-            entry.data = Buffer.from(content);
+        
+        } catch (err) {
+            console.log(err.message);
+            vscode.window.showErrorMessage(err.message);
+        }
 
-            return entry;
-        }        
+        return new File("unknown");
     }
 
-    async savePipeline(id:string, content:string): Promise<void> {        
+    async savePipeline(uri: vscode.Uri, content:string): Promise<void> {        
         try {
             //Format content
             var payload = JSON.stringify({pipeline: content});
+            const basename = path.posix.basename(uri.path);
 
-            // const response = await fetch('https://localhost:5601/api/logstash/pipeline'+this.fromConf(id), {
-            const response = await fetch(this.root+'/api/logstash/pipeline/'+id, {
+            const response = await fetch("https://"+uri.authority+'/api/logstash/pipeline/'+basename, {
                 method: 'PUT',
                 headers: this.headers,
                 agent: this.httpsAgent,
@@ -164,10 +161,10 @@ export class KibanaDriver {
         }
     }
 
-    async deletePipeline(id:string): Promise<void> {
+    async deletePipeline(uri: vscode.Uri): Promise<void> {
         try {
-            // const response = await fetch('https://localhost:5601/api/logstash/pipeline'+this.fromConf(id), {
-            const response = await fetch(this.root+'/api/logstash/pipeline/'+id, {
+                const basename = path.posix.basename(uri.path);
+                const response = await fetch("https://"+uri.authority+'/api/logstash/pipeline/'+basename, {
                 method: 'DELETE',
                 headers: this.headers,
                 agent: this.httpsAgent
@@ -180,12 +177,4 @@ export class KibanaDriver {
             vscode.window.showErrorMessage(err.message);
         }
     }
-
-    // toConf(id:string): string{
-    //     return id+".conf";
-    // }
-
-    // fromConf(id:string): string{
-    //     return id.replace('.conf', '');
-    // }
 }

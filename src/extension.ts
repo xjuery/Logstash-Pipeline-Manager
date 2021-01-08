@@ -35,21 +35,35 @@ export function activate(context: vscode.ExtensionContext) {
     //     }
     // }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('lpm.init', _ => {
-        if (initialized) {
-            return;
-        }
-        initialized = true;
+    // context.subscriptions.push(vscode.commands.registerCommand('lpm.init', _ => {
+    //     if (initialized) {
+    //         return;
+    //     }
+    //     initialized = true;
 
-        // most common files types
-        lpm.writeFile(vscode.Uri.parse(`lpm:/file.conf`), Buffer.from('foo'), { create: true, overwrite: true });
-        lpm.writeFile(vscode.Uri.parse(`lpm:/file.html`), Buffer.from('<html><body><h1 class="hd">Hello LPM</h1></body></html>'), { create: true, overwrite: true });
+    //     // most common files types
+    //     lpm.writeFile(vscode.Uri.parse(`lpm:/file.conf`), Buffer.from('foo'), { create: true, overwrite: true });
+    //     lpm.writeFile(vscode.Uri.parse(`lpm:/file.html`), Buffer.from('<html><body><h1 class="hd">Hello LPM</h1></body></html>'), { create: true, overwrite: true });
         
-    }));
+    // }));
 
-    context.subscriptions.push(vscode.commands.registerCommand('lpm.workspaceInit', _ => {
-        vscode.workspace.updateWorkspaceFolders(0, 0, { uri: vscode.Uri.parse('lpm:/'), name: "Logstash Pipeline Manager" });
-    }));
+    context.subscriptions.push(vscode.commands.registerCommand(
+        'lpm.connect', 
+        async () => {
+            // 'lpm://elastic:password@192.168.1.104:5601/'
+            const rep = await vscode.window.showInputBox({
+                prompt: "Please enter the kibana url with your creds: ",
+                placeHolder: "https://user:password@hostname:port/"
+              });
+            if(rep) {
+                const url = require('url');
+                var myURL = url.parse(rep);
+                var replaced = rep.replace("https", "lpm").replace("http", "lpm");
+                var lpmurl = vscode.Uri.parse(replaced);
+                vscode.workspace.updateWorkspaceFolders(0, 0, { uri: lpmurl, name: "LPM - "+myURL.hostname+" ("+myURL.port+")" });
+            }
+        }
+    ));
 
 	//context.subscriptions.push(disposable);
 }
